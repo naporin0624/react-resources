@@ -1,6 +1,8 @@
 import { useContext, useEffect, useRef, useReducer } from "react";
 import { Mapping, FetcherReturnType } from "../types";
-import { Resources, context } from "../index";
+import { context } from "../core/context";
+
+import type { Resources } from "../index";
 
 interface ReactResource<T, Args extends unknown[]> {
   read(...args: Args): T;
@@ -23,10 +25,8 @@ export const useResource = () => {
           break;
         }
         case "reset": {
-          const { key, args } = cache.payload;
-          if (key !== keyRef.current) return;
-          if (!args) force();
-
+          const { key } = cache.payload;
+          if (key == keyRef.current) force();
           break;
         }
       }
@@ -40,13 +40,8 @@ export const useResource = () => {
   return new Proxy({} as UseResource, {
     get<K extends keyof UseResource>(_: unknown, key: K) {
       keyRef.current = key;
-      function read() {
-        const args = (arguments as unknown) as Parameters<Mapping<Resources>[K]>;
-        return store.get(key, ...args);
-      }
-      function reset() {
-        store.reset(key);
-      }
+      const read = (...args: Parameters<Mapping<Resources>[K]>) => store.get(key, ...args);
+      const reset = () => store.reset(key);
 
       return { read, reset };
     }

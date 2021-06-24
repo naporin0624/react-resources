@@ -4,7 +4,7 @@ import { render } from "react-dom";
 
 import { ResourceProvider } from "./react-resource";
 import { timer } from "./resource/timer";
-import { todos, todo } from "./resource/todo";
+import { getTodos } from "./resource/todo";
 
 import App from "./App";
 import { FallbackComponent } from "./FallbackComponent";
@@ -16,14 +16,13 @@ declare module "react" {
 declare module "./react-resource" {
   interface Resources {
     timer: typeof timer;
-    todos: typeof todos;
-    todo: typeof todo;
+    todos: typeof getTodos;
   }
 }
 
 const rootElement = document.getElementById("root");
 render(
-  <ResourceProvider resources={{ timer, todos, todo }}>
+  <ResourceProvider resources={{ timer, todos: getTodos }}>
     <ErrorBoundary FallbackComponent={FallbackComponent}>
       <Suspense fallback={"loading"}>
         <App />

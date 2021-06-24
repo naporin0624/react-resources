@@ -11,8 +11,8 @@ export class Resource<T, Args extends Array<unknown>> implements ReactResource<T
   private fetcher: (...args: Args) => Promise<T>;
 
   private awaiter!: Promise<void>;
-  private resolver!: Function;
-  private rejector!: Function;
+  private resolver!: () => void;
+  private rejector!: () => void;
 
   constructor(args: Promise<T> | ((...args: Args) => Promise<T>)) {
     this.init();
@@ -61,7 +61,6 @@ export class Resource<T, Args extends Array<unknown>> implements ReactResource<T
   }
 
   private dispatch(next: Status<T>) {
-    console.log("dispatch", next);
     this.status = next;
   }
 }

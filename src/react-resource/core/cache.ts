@@ -32,9 +32,10 @@ export interface CacheStore<T extends Record<string, Fetcher>> {
   subscribe(callback: Subscriber<T>): { unsubscribe: () => void };
 }
 export function createReactResource<T extends Record<string, Fetcher>>(resources: T): CacheStore<Mapping<T>> {
-  const cacheMap = new Map<string, Resource<any, any>>();
-  const subscribeMap = new Map<Symbol, Subscriber<T>>();
-  const generateKey = (key: string, input: any) => `${key}__${stringify(input)}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cacheMap = new Map<string, Resource<any, unknown[]>>();
+  const subscribeMap = new Map<symbol, Subscriber<T>>();
+  const generateKey = (key: string, input: unknown) => `${key}__${stringify(input)}`;
 
   const runSubscribers = (action: Action<T>) => {
     subscribeMap.forEach((callback) => {
@@ -43,10 +44,7 @@ export function createReactResource<T extends Record<string, Fetcher>>(resources
   };
 
   return {
-    get<K extends keyof T>(
-      key: K & string,
-      ...input: Parameters<T[K]>
-    ): ReturnType<T[K]> extends Promise<infer U> ? U : never {
+    get<K extends keyof T>(key: K & string, ...input: Parameters<T[K]>): FetcherReturnType<T[K]> {
       const acc = generateKey(key, input);
       const result = cacheMap.get(acc) ?? new Resource(resources[key]);
       cacheMap.set(acc, result);

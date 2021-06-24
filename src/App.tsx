@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 import { useResource, useClearResource } from "./react-resource";
 
 const DelaySample = ({ timeout }: { timeout: number }) => {
@@ -19,7 +19,7 @@ const DelaySample = ({ timeout }: { timeout: number }) => {
 };
 
 const TodoSample = ({ id }: { id: number }) => {
-  const todo = useResource().todo.read(id);
+  const todo = useResource().todos.read(id);
 
   return (
     <div>
@@ -38,12 +38,20 @@ export default function App() {
       <Suspense fallback={<p>sample1 fallback</p>}>
         <DelaySample timeout={1000} />
       </Suspense>
-      {/* <Suspense fallback={<p>sample2 fallback</p>}>
+      <Suspense fallback={<p>sample1 fallback</p>}>
+        <DelaySample timeout={1000} />
+      </Suspense>
+      <Suspense fallback={<p>sample2 fallback</p>}>
         <DelaySample timeout={2000} />
       </Suspense>
       <Suspense fallback={<p>todo fallback</p>}>
         <TodoSample id={1} />
-      </Suspense> */}
+        <TodoSample id={1} />
+        <TodoSample id={1} />
+        <TodoSample id={1} />
+        <TodoSample id={1} />
+        <TodoSample id={1} />
+      </Suspense>
     </div>
   );
 }

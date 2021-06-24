@@ -1,5 +1,5 @@
 import { useContext, useCallback } from "react";
-import { context } from "../index";
+import { context } from "../core/context";
 
 export const useClearResource = () => {
   const store = useContext(context);
