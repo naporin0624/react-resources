@@ -1,9 +1,12 @@
 import isPromise from "is-promise";
 import type { Status } from "../types";
 
+type Subscriber<T> = (status: Status<T>) => void;
+
 export interface ReactResource<T, Args extends Array<unknown>> {
   resolve(...args: Args): void;
   getData(): T;
+  subscribe(callback: Subscriber<T>): { unsubscribe(): void };
 }
 
 export class Resource<T, Args extends Array<unknown>> implements ReactResource<T, Args> {
@@ -14,9 +17,21 @@ export class Resource<T, Args extends Array<unknown>> implements ReactResource<T
   private resolver!: () => void;
   private rejector!: () => void;
 
+  private subscriber = new Map<symbol, Subscriber<T>>();
+
   constructor(args: Promise<T> | ((...args: Args) => Promise<T>)) {
     this.init();
     this.fetcher = isPromise(args) ? () => args : args;
+  }
+  subscribe(callback: (status: Status<T>) => void): { unsubscribe(): void } {
+    const id = Symbol();
+    this.subscriber.set(id, callback);
+
+    return {
+      unsubscribe: () => {
+        this.subscriber.delete(id);
+      }
+    };
   }
 
   resolve(...args: Args) {
@@ -62,5 +77,8 @@ export class Resource<T, Args extends Array<unknown>> implements ReactResource<T
 
   private dispatch(next: Status<T>) {
     this.status = next;
+    this.subscriber.forEach((value) => {
+      value(this.status);
+    });
   }
 }

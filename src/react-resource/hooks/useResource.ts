@@ -1,8 +1,8 @@
 import { useContext, useEffect, useRef, useReducer } from "react";
-import { Mapping, FetcherReturnType } from "../types";
 import { context } from "../core/context";
 
 import type { Resources } from "../index";
+import type { Mapping, FetcherReturnType } from "../types";
 
 interface ReactResource<T, Args extends unknown[]> {
   read(...args: Args): T;

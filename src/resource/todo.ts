@@ -9,12 +9,12 @@ const todoSchema = z.object({
 });
 export type Todo = z.infer<typeof todoSchema>;
 
-interface GetTodos {
+interface GetTodo {
   execute(): Promise<Todo[]>;
   execute(id: number): Promise<Todo>;
 }
 
-class GetTodoImplements implements GetTodos {
+class GetTodoImpl implements GetTodo {
   execute(): Promise<Todo[]>;
   execute(id: number): Promise<Todo>;
   execute(id?: number): Promise<Todo[] | Todo> {
@@ -31,10 +31,4 @@ class GetTodoImplements implements GetTodos {
   }
 }
 
-const instance = new GetTodoImplements();
-export function getTodos(id: number): Promise<Todo>;
-export function getTodos(): Promise<Todo[]>;
-
-export function getTodos(id?: number) {
-  return id ? instance.execute(id) : instance.execute();
-}
+export const getTodo = new GetTodoImpl();
