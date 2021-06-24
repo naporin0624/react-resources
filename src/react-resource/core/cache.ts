@@ -1,91 +1,68 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import stringify from "fast-json-stable-stringify";
+import { Fetcher, FetcherReturnType } from "../types";
 import { Resource } from "./resource";
 
-import type { Mapping, FetcherReturnType, Fetcher } from "../types";
-
-type Action<T extends Record<string, Fetcher>> =
-  | {
-      type: "get";
-      payload: {
-        [K in keyof T]: { key: K; args: Parameters<T[K]> };
-      }[keyof T];
-    }
-  | {
-      type: "reset";
-      payload: {
-        [K in keyof T]: { key: K; args?: Parameters<T[K]> };
-      }[keyof T];
-    }
-  | {
-      type: "clear";
-    };
-
-type Subscriber<T extends Record<string, Fetcher>> = (action: Action<T>) => void;
-
-export interface CacheStore<T extends Record<string, Fetcher>> {
-  get<K extends keyof T>(key: K, ...input: Parameters<T[K]>): ReturnType<T[K]> extends Promise<infer U> ? U : never;
-  reset<K extends keyof T>(key: K, input?: Parameters<T[K]>): void;
+interface Cache<T extends Fetcher> {
+  get(...args: Parameters<T>): Resource<FetcherReturnType<T>, Parameters<T>>;
   clear(): void;
-  getStore(): {
-    [K in keyof T]: Resource<FetcherReturnType<T[K]>, Parameters<T[K]>>;
-  };
-  subscribe(callback: Subscriber<T>): { unsubscribe: () => void };
 }
-export function createReactResource<T extends Record<string, Fetcher>>(resources: T): CacheStore<Mapping<T>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cacheMap = new Map<string, Resource<any, unknown[]>>();
-  const subscribeMap = new Map<symbol, Subscriber<T>>();
-  const generateKey = (key: string, input: unknown) => `${key}__${stringify(input)}`;
 
-  const runSubscribers = (action: Action<T>) => {
-    subscribeMap.forEach((callback) => {
-      callback(action);
-    });
-  };
+type CacheMap<T extends Record<string, Fetcher>> = {
+  [K in keyof T]: Map<string, Resource<FetcherReturnType<T[K]>, Parameters<T[K]>>>;
+};
+type CacheStore<T extends Record<string, Fetcher>> = {
+  [K in keyof T]: Cache<T[K]>;
+};
+export type ResourceCache<T extends Record<string, Fetcher>> = CacheStore<T> & {
+  clear(): void;
+};
 
-  return {
-    get<K extends keyof T>(key: K & string, ...input: Parameters<T[K]>): FetcherReturnType<T[K]> {
-      const acc = generateKey(key, input);
-      const result = cacheMap.get(acc) ?? new Resource(resources[key]);
-      cacheMap.set(acc, result);
+const get = () => {
+  /* */
+};
+const clear = () => {
+  /* */
+};
 
-      result.resolve(...input);
-      runSubscribers({ type: "get", payload: { key, args: input } });
+export const createResourceCache = <T extends Record<string, Fetcher>>(fetchers: T): ResourceCache<T> => {
+  const cacheMap = {} as CacheMap<T>;
+  const mock = Object.keys(fetchers)
+    .map((key) => ({ [key]: get, clear }))
+    .reduce((acc, value) => ({ ...acc, ...value }), {}) as CacheStore<T>;
 
-      return result.getData();
-    },
-    reset<K extends keyof T>(key: K & string, input?: Parameters<T[K]>): void {
-      if (!input) {
-        cacheMap.forEach((value) => {
-          value.reset();
-        });
-        runSubscribers({ type: "reset", payload: { key } });
-      } else {
-        cacheMap.get(generateKey(key, input))?.reset();
-        runSubscribers({ type: "reset", payload: { key, args: input } });
-      }
-    },
-    clear() {
-      cacheMap.clear();
-      runSubscribers({ type: "clear" });
-    },
-    getStore() {
-      const o = {} as ReturnType<CacheStore<T>["getStore"]>;
-      cacheMap.forEach((value, key: keyof T) => {
-        o[key] = value;
-      });
-
-      return o;
-    },
-    subscribe(callback: Subscriber<T>) {
-      const id = Symbol();
-      subscribeMap.set(id, callback);
+  const cache = new Proxy(mock, {
+    get<K extends keyof T>(_: CacheStore<T>, key: K & string): Cache<T[K]> {
+      if (!cacheMap[key]) cacheMap[key] = new Map<string, Resource<any, any>>();
+      const cache = cacheMap[key];
 
       return {
-        unsubscribe() {
-          subscribeMap.delete(id);
+        get(...args: Parameters<T[K]>) {
+          const acc = `${key}__${stringify(args)}`;
+          if (cache.has(acc)) {
+            return cache.get(acc)!;
+          }
+
+          const resource = new Resource(fetchers[key]);
+          cache.set(acc, resource);
+          return resource;
+        },
+        clear() {
+          cache.forEach((value) => {
+            value.reset();
+          });
         }
       };
     }
+  });
+  return {
+    ...cache,
+    clear() {
+      Object.keys(cacheMap).forEach((key) => {
+        cache[key].clear();
+      });
+    }
   };
-}
+};

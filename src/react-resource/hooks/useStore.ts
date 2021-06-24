@@ -4,5 +4,5 @@ import { context } from "../core/context";
 export const useStore = () => {
   const store = useContext(context);
 
-  return useMemo(() => store.getStore(), [store]);
+  return useMemo(() => store, [store]);
 };

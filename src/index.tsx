@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { render } from "react-dom";
 
-import { ResourceProvider, Resources } from "./react-resource";
+import { ResourceProvider } from "./react-resource";
 import { timer } from "./resource/timer";
 import { getTodo, Todo } from "./resource/todo";
 
@@ -21,7 +21,7 @@ declare module "./react-resource" {
   }
 }
 
-const resources: Resources = {
+const resources = {
   timer,
   todos: () => getTodo.execute(),
   todo: (id: number) => getTodo.execute(id)

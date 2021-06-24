@@ -5,7 +5,6 @@ type Subscriber<T> = (status: Status<T>) => void;
 
 export interface ReactResource<T, Args extends Array<unknown>> {
   resolve(...args: Args): void;
-  getData(): T;
   subscribe(callback: Subscriber<T>): { unsubscribe(): void };
 }
 
@@ -23,22 +22,13 @@ export class Resource<T, Args extends Array<unknown>> implements ReactResource<T
     this.init();
     this.fetcher = isPromise(args) ? () => args : args;
   }
-  subscribe(callback: (status: Status<T>) => void): { unsubscribe(): void } {
-    const id = Symbol();
-    this.subscriber.set(id, callback);
-
-    return {
-      unsubscribe: () => {
-        this.subscriber.delete(id);
-      }
-    };
-  }
 
   resolve(...args: Args) {
     if (this.status.type !== "wait") return;
 
-    this.dispatch({ type: "pending" });
-    this.fetcher(...args)
+    const promise = this.fetcher(...args);
+    this.dispatch({ type: "pending", payload: promise });
+    promise
       .then((data) => {
         this.dispatch({ type: "success", payload: data });
         this.resolver();
@@ -53,18 +43,15 @@ export class Resource<T, Args extends Array<unknown>> implements ReactResource<T
     this.init();
   }
 
-  getData() {
-    switch (this.status.type) {
-      case "success": {
-        return this.status.payload;
+  subscribe(callback: (status: Status<T>) => void): { unsubscribe(): void } {
+    const id = Symbol();
+    this.subscriber.set(id, callback);
+
+    return {
+      unsubscribe: () => {
+        this.subscriber.delete(id);
       }
-      case "error": {
-        throw this.status.payload;
-      }
-      default: {
-        throw this.awaiter;
-      }
-    }
+    };
   }
 
   private init() {
@@ -72,7 +59,7 @@ export class Resource<T, Args extends Array<unknown>> implements ReactResource<T
       this.resolver = resolve;
       this.rejector = reject;
     });
-    this.dispatch({ type: "wait" });
+    this.dispatch({ type: "wait", payload: this.awaiter });
   }
 
   private dispatch(next: Status<T>) {

@@ -1,25 +1,18 @@
 import React, { Suspense, useState } from "react";
 import { useResource, useClearResource } from "./react-resource";
-import { useResourceCallback } from "./react-resource/hooks/useResourceCallback";
 
 const DelaySample = ({ timeout }: { timeout: number }) => {
   const { reset, read } = useResource().timer;
-  const execute = useResourceCallback().timer;
   const [ms, setMs] = useState(read(timeout));
   const onClick = () => {
     reset();
   };
-  const e = async () => {
-    setMs(await execute(5000));
-  };
-
   return (
     <div>
       <h2>timer</h2>
       <div style={{ display: "flex", gap: 10 }}>
         <span>timeout: {ms}</span>
         <button onClick={onClick}>reset</button>
-        <button onClick={e}>click</button>
       </div>
     </div>
   );

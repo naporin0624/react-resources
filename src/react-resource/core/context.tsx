@@ -1,6 +1,8 @@
 import { createContext } from "react";
-import { CacheStore } from "./cache";
-import { Mapping } from "../types";
-import { Resources } from "../index";
 
-export const context = createContext<CacheStore<Mapping<Resources>>>(null as unknown as CacheStore<Mapping<Resources>>);
+import type { ResourceCache } from "./cache";
+import type { Mapping } from "../types";
+import type { Resources } from "../index";
+
+type Value = ResourceCache<Mapping<Resources>>;
+export const context = createContext<Value>({} as Value);

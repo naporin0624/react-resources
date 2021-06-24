@@ -1,5 +1,6 @@
 import axios from "axios";
 import * as z from "zod";
+import { timer } from "./timer";
 
 const todoSchema = z.object({
   id: z.number(),
@@ -17,7 +18,8 @@ interface GetTodo {
 class GetTodoImpl implements GetTodo {
   execute(): Promise<Todo[]>;
   execute(id: number): Promise<Todo>;
-  execute(id?: number): Promise<Todo[] | Todo> {
+  async execute(id?: number): Promise<Todo[] | Todo> {
+    await timer(1000);
     return id ? this.single(id) : this.all();
   }
 

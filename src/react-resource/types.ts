@@ -1,7 +1,7 @@
 export type Status<T> =
   | {
       type: "pending";
-      payload?: never;
+      payload: Promise<T>;
     }
   | {
       type: "success";
@@ -13,9 +13,8 @@ export type Status<T> =
     }
   | {
       type: "wait";
-      payload?: never;
+      payload: Promise<void>;
     };
-
 export type Mapping<T> = {
   [K in keyof T]: T[K];
 };
